@@ -272,15 +272,22 @@ bool ConfigurationManager::init()
     m_list_controller_service = m_nh.advertiseService("list_configurations",
                                       &cnr_configuration_manager::ConfigurationManager::listConfigurations, this);
 
+    CNR_WARN(m_logger, "********************* INIT2 ***************************");
     CNR_TRACE_START(m_logger);
+    CNR_WARN(m_logger, "********************* INIT5 ***************************");
     if (m_nh.hasParam("control_configurations") && getAvailableConfigurationsFromParam())
     {
+      CNR_WARN(m_logger, "********************* INIT4 ***************************");
       m_nh.setParam("status/active_configuration", "none");
     }
     else
     {
+      CNR_WARN(m_logger, "********************* INIT6 ***************************");
+      if (m_nh.hasParam("control_configurations")) CNR_WARN(m_logger, "have param: control_configurations");
+      CNR_WARN(m_logger, "Configuration Manager: param '" + m_nh.getNamespace() + "/control_configurations' is broken. Abort");
       CNR_RETURN_FALSE(m_logger, "Configuration Manager: param '" + m_nh.getNamespace() + "/control_configurations' is broken. Abort");
     }
+    CNR_WARN(m_logger, "********************* INIT3 ***************************");
 
     m_signal_handler.setupSignalHandlers();
 
@@ -438,6 +445,8 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   std::string error;
   if (!m_conf_loader.listHw(hw_names_from_nodelet, watchdog, error))
   {
+    CNR_ERROR(m_logger,
+                  "Error in getting the loaded hardware interfaces by the nodelet manager: " + error);
     CNR_RETURN_FALSE(m_logger,
                   "Error in getting the loaded hardware interfaces by the nodelet manager: " + error);
   }
@@ -493,6 +502,8 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   {
     if (!m_conf_loader.loadHw(hw_to_load_name, watchdog, error))
     {
+      CNR_ERROR(m_logger,
+                       "Loading of the RobotHW '" + hw_to_load_name + "' failed. Error:\n\t=>" + error);
       CNR_RETURN_FALSE(m_logger,
                        "Loading of the RobotHW '" + hw_to_load_name + "' failed. Error:\n\t=>" + error);
     }
@@ -598,6 +609,7 @@ bool ConfigurationManager::getAvailableConfigurationsFromParam()
   if (!m_nh.getParam("control_configurations", configuration_components))
   {
     std::string error = "Param '" + m_nh.getNamespace() + "/control_configurations' is not found." ;
+    CNR_WARN(m_logger, error);
     CNR_RETURN_FALSE(m_logger, error);
   }
 
@@ -605,6 +617,7 @@ bool ConfigurationManager::getAvailableConfigurationsFromParam()
   if (!param::get_configuration_components(configuration_components, configurations, error))
   {
     error = "Param '" + m_nh.getNamespace() + "/control_configurations' error: " + error;
+    CNR_WARN(m_logger, error);
     CNR_RETURN_FALSE(m_logger, error);
   }
 

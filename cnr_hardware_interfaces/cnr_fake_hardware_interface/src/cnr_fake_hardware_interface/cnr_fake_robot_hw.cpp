@@ -99,7 +99,7 @@ bool FakeRobotHW::doInit()
 {
   CNR_TRACE_START(m_logger);
 
-  CNR_DEBUG(m_logger, "Resources (" << resourceNumber() << "): " << cnr_hardware_interface::to_string(resourceNames()));
+  CNR_INFO(m_logger, "Resources (" << resourceNumber() << "): " << cnr_hardware_interface::to_string(resourceNames()));
   m_pos.resize(resourceNumber());
   m_vel.resize(resourceNumber());
   m_eff.resize(resourceNumber());
@@ -164,6 +164,8 @@ bool FakeRobotHW::doInit()
     m_e_jh.registerHandle(hardware_interface::JointHandle(state_handle, &(m_cmd_eff.at(i))));
 
     m_pve_jh.registerHandle(hardware_interface::PosVelEffJointHandle(state_handle, &(m_cmd_pos.at(i)), &(m_cmd_vel.at(i)), &(m_cmd_eff.at(i))));
+    m_pv_jh.registerHandle(hardware_interface::PosVelJointHandle(state_handle, &(m_cmd_pos.at(i)), &(m_cmd_vel.at(i))));
+
     m_ve_jh.registerHandle(hardware_interface::VelEffJointHandle(state_handle, &(m_cmd_vel.at(i)), &(m_cmd_eff.at(i))));
   }
 
@@ -201,6 +203,7 @@ bool FakeRobotHW::doInit()
   registerInterface(&m_v_jh);
   registerInterface(&m_e_jh);
   registerInterface(&m_pve_jh);
+  registerInterface(&m_pv_jh);
   registerInterface(&m_ve_jh);
   registerInterface(&m_ft_jh);
 
@@ -245,6 +248,13 @@ bool FakeRobotHW::doWrite(const ros::Time& /*time*/, const ros::Duration& period
     m_eff.resize(resourceNumber());
     std::fill(m_eff.begin(), m_eff.end(), 0.0);
   }
+  std::string str = "a:";
+  for (int i = 0;i<m_pos.size();i++) str += std::to_string(m_pos[i]) + " ";
+  str += ",b:";
+  for (int i = 0;i<m_vel.size();i++) str += std::to_string(m_vel[i]) + " ";
+  // ROS_INFO_STREAM(str);
+  // ROS_INFO_STREAM("p:"<<m_pos[0]<<","<<m_pos[1]<<","<<m_pos[2]<<","<<m_pos[3]<<","<<m_pos[4]<<","<<m_pos[5]);
+  // ROS_INFO_STREAM("v:"<<m_vel[0]<<","<<m_vel[1]<<","<<m_vel[2]<<","<<m_vel[3]<<","<<m_vel[4]<<","<<m_vel[5]);
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
@@ -262,6 +272,7 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
   {
     for (const hardware_interface::InterfaceResources& res : controller.claimed_resources)
     {
+      CNR_INFO(m_logger,res.hardware_interface);
       if (!res.hardware_interface.compare("hardware_interface::PositionJointInterface"))
         p_jh_active = false;
       if (!res.hardware_interface.compare("hardware_interface::VelocityJointInterface"))
@@ -279,6 +290,11 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
         v_jh_active = false;
         e_jh_active = false;
       }
+      if (!res.hardware_interface.compare("hardware_interface::PosVelJointInterface"))
+      {
+        p_jh_active = false;
+        v_jh_active = false;
+      }
     }
   }
 
@@ -291,11 +307,13 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
       CNR_DEBUG(m_logger, "Claimed resource: " << res.hardware_interface);
       p_jh_active = (res.hardware_interface == "hardware_interface::PositionJointInterface")
                     || (res.hardware_interface == "hardware_interface::PosVelEffJointInterface")
+                    || (res.hardware_interface == "hardware_interface::PosVelJointInterface")
                     ? true : p_jh_active;
 
       v_jh_active = (res.hardware_interface == "hardware_interface::VelocityJointInterface")
                     || (res.hardware_interface == "hardware_interface::VelEffJointInterface")
                     || (res.hardware_interface == "hardware_interface::PosVelEffJointInterface")
+                    || (res.hardware_interface == "hardware_interface::PosVelJointInterface")
                     ? true : v_jh_active;
 
       e_jh_active = (res.hardware_interface == "hardware_interface::EffortJointInterface")
@@ -307,9 +325,9 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
   m_p_jh_active = p_jh_active;
   m_v_jh_active = v_jh_active;
   m_e_jh_active = e_jh_active;
-  CNR_DEBUG(m_logger, " Pos joint handle active? " << m_p_jh_active);
-  CNR_DEBUG(m_logger, " Vel joint handle active? " << m_v_jh_active);
-  CNR_DEBUG(m_logger, " Eff joint handle active? " << m_e_jh_active);
+  CNR_INFO(m_logger, " Pos joint handle active? " << m_p_jh_active);
+  CNR_INFO(m_logger, " Vel joint handle active? " << m_v_jh_active);
+  CNR_INFO(m_logger, " Eff joint handle active? " << m_e_jh_active);
   CNR_RETURN_TRUE(m_logger, "Active hardware interfaces: " + cnr::control::to_string(resources));
 
 }

@@ -245,24 +245,32 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
       CNR_RETURN_FALSE(m_logger);
     }
 
-    CNR_DEBUG(m_logger, "Loading instance: '"  << robot_type << "'");
-    CNR_DEBUG(m_logger, "Is Class Available? " << (m_robot_hw_loader->isClassAvailable(robot_type) ? "YES" : "NO"));
-    CNR_DEBUG(m_logger, "Name of the class ? " <<  m_robot_hw_loader->getName(robot_type));
+    CNR_INFO(m_logger, "Loading instance: '"  << robot_type << "'");
+    CNR_INFO(m_logger, "Is Class Available? " << (m_robot_hw_loader->isClassAvailable(robot_type) ? "YES" : "NO"));
+    CNR_INFO(m_logger, "Name of the class ? " <<  m_robot_hw_loader->getName(robot_type));
 
     m_robot_hw_loader->loadLibraryForClass(robot_type);
     auto hw = m_robot_hw_loader->createInstance(robot_type);
     m_hw = cnr_hardware_interface::to_std_ptr( hw );
     if (m_hw == nullptr)
-    {
+    {      
+      CNR_ERROR(m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
+
       dumpState(cnr_hardware_interface::ERROR);
+
       CNR_RETURN_FALSE(m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
     }
+    CNR_INFO(m_logger, "m_hw set");
     m_cnr_hw = dynamic_cast<cnr_hardware_interface::RobotHW*>(m_hw.get()); // if not null, there are many fancy & funny functions
+    if (m_cnr_hw) CNR_INFO(m_logger, "is m_cnr_hw");
+    if (!m_cnr_hw) CNR_INFO(m_logger, "is not m_cnr_hw");
     dumpState( m_cnr_hw ? m_cnr_hw->getState() : cnr_hardware_interface::CREATED );
 
     if (!m_hw->init(m_root_nh, m_hw_nh))
     {
       dumpState(cnr_hardware_interface::ERROR);
+      CNR_ERROR(m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
+
       CNR_RETURN_FALSE(m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
     }
     dumpState( m_cnr_hw ? m_cnr_hw->getState() : cnr_hardware_interface::INITIALIZED);
@@ -417,8 +425,8 @@ void RobotHwDriverInterface::run()
   CNR_WARN(m_logger, "Start update thread (period: " << m_period << ")");    
   if(m_cnr_hw)
   {
-    CNR_DEBUG(m_logger, "Start the Diagnostic thread");
-    CNR_DEBUG(m_logger, "Frequency: '" << 1.0 / m_period.toSec() << "'");
+    CNR_WARN(m_logger, "Start the Diagnostic thread");
+    CNR_WARN(m_logger, "Frequency: '" << 1.0 / m_period.toSec() << "'");
 
     m_diagnostics_thread_running = false;
     m_stop_diagnostic_thread     = false;
@@ -436,6 +444,7 @@ void RobotHwDriverInterface::run()
 
   if(!m_cnr_hw)
   {
+    CNR_WARN(m_logger, "not m_cnr_hw");
     dumpState(cnr_hardware_interface::RUNNING);
   }
 
@@ -480,7 +489,6 @@ void RobotHwDriverInterface::run()
     dumpState(cnr_hardware_interface::ERROR);
     CNR_RETURN_NOTOK(m_logger, void());
   }
-
 
   while (ros::ok() && !m_stop_run)
   {

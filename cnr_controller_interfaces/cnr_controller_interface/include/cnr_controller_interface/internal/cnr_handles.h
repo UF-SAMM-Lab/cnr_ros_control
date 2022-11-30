@@ -5,6 +5,7 @@
 #include <rosdyn_chain_state/chain_state.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/posvel_command_interface.h>
 #include <cnr_hardware_interface/veleff_command_interface.h>
 #include <cnr_hardware_interface/posveleff_command_interface.h>
 
@@ -266,6 +267,37 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.q(ax.second));
+    }
+  }
+};
+
+/**
+ * @brief PosVelJointInterface
+ */
+template<>
+struct Handler<hardware_interface::PosVelJointHandle, hardware_interface::PosVelJointInterface> : public HandlerBase
+{
+  std::map<std::string, hardware_interface::PosVelJointHandle> handles_;
+
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  {
+    if(!initialized_) init(handles_, chain);
+    for(auto const & ax : indexes_)
+    {
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = 0.0;
+    }
+  }
+
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  {
+    if(!initialized_) init(handles_, chain);
+    for(auto const & ax : indexes_)
+    {
+      handles_.at(ax.first).setCommandPosition(ks.q(ax.second));
+      handles_.at(ax.first).setCommandVelocity(ks.qd(ax.second));
     }
   }
 };

@@ -167,18 +167,20 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
 
     std::string type;
     std::map<std::string,std::string> remappings;
+    ROS_INFO_STREAM("loading driver param for :"<<hw_to_load_name);
     if (!getHwParam(nh, hw_to_load_name, type, remappings, error))
     {
       error = "Loading The driver for RobotHW " + hw_to_load_name + " got an error: " + error;
       return false;
     }
-
+    ROS_INFO_STREAM("loading driver for :"<<hw_to_load_name);
     drivers_[hw_to_load_name].reset(new cnr_hardware_driver_interface::RobotHwDriverInterface() );
     if(!drivers_[hw_to_load_name]->init(hw_to_load_name, remappings))
     {
       error = "Failed when loading '" + hw_to_load_name + "'";
       return false;
     }
+    ROS_INFO_STREAM("loaded driver for :"<<hw_to_load_name);
   }
   //=====================================================================================
 
@@ -197,6 +199,7 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
 
   for (auto const & hw : hw_to_start_names)
   { 
+    ROS_WARN_STREAM("starter:"<<hw);
     starters[hw] = new std::thread(starter, hw, drivers_[hw],std::ref(start_ok[hw]) );
   }
 
@@ -208,6 +211,7 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
     }
     delete thread.second;
   }
+  ROS_WARN_STREAM("started");
 
   bool ok = true;
   std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)

@@ -77,6 +77,7 @@ bool TopicRobotHW::doInit()
 
   CNR_TRACE_START(m_logger);
   std::string read_js_topic;
+  CNR_INFO(m_logger,"topicrobothw doinit");
   if (!m_robothw_nh.getParam("feedback_joint_state_topic", read_js_topic))
   {
     addDiagnosticsMessage("ERROR", "feedback_joint_state_topic not defined", {{"Transition", "switching"}}, &report);

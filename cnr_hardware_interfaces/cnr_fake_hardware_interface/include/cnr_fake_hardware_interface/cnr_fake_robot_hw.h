@@ -38,7 +38,7 @@
 #include <mutex>
 
 #include <cnr_hardware_interface/cnr_robot_hw.h>
-#include <hardware_interface/posvelacc_command_interface.h>
+#include <hardware_interface/posvel_command_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/force_torque_sensor_interface.h>
 
@@ -74,6 +74,7 @@ protected:
   hardware_interface::VelocityJointInterface        m_v_jh;    //interface for writing velocity target
   hardware_interface::EffortJointInterface          m_e_jh;    //interface for writing effort target
   hardware_interface::PosVelEffJointInterface       m_pve_jh;
+  hardware_interface::PosVelJointInterface          m_pv_jh;
   hardware_interface::VelEffJointInterface          m_ve_jh;
   hardware_interface::ForceTorqueSensorInterface    m_ft_jh;   // sensor interface
 

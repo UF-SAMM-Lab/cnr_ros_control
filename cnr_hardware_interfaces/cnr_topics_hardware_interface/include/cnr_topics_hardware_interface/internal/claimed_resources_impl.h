@@ -40,6 +40,7 @@ ClaimedResource<MSG>::ClaimedResource(const cnr_hardware_interface::Resource& re
       m_pub_msg.resize(res.m_published_topics.size());
       for (size_t i = 0; i < m_pub.size(); i++)
       {
+        ROS_INFO_STREAM(res.m_published_topics.at(i));
         m_pub.at(i).reset(new ros::Publisher());
         *m_pub.at(i) = robothw_nh.advertise< MSG >(res.m_published_topics.at(i), 1);
         typename MSG::Ptr msg(new MSG());

@@ -102,17 +102,21 @@ bool TopicsRobotHW::doInit()
 
 {
   CNR_TRACE_START(m_logger);
+
+  CNR_INFO(m_logger,"TopicsRobotHW init");
   try
   {
     std::vector<std::string> resources;
     if (!m_robothw_nh.getParam("resources", resources))
     {
+      CNR_ERROR(m_logger,m_robothw_nh.getNamespace() + "/resources' does not exist");
       CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/resources' does not exist");
     }
 
     int maximum_missing_cycles;
     if (!m_robothw_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
     {
+      CNR_ERROR(m_logger,m_robothw_nh.getNamespace() + "/maximum_missing_cycles does not exist");
       CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/maximum_missing_cycles does not exist");
     }
 
@@ -130,7 +134,7 @@ bool TopicsRobotHW::doInit()
 
       if (it != cnr_hardware_interface::RESOURCES().end())
       {
-        CNR_DEBUG(m_logger, "Reading param for resource: '" << it->second);
+        CNR_INFO(m_logger, "Reading param for resource: '" << it->second);
         std::string ns = m_robothw_nh.getNamespace() + "/" + it->second;
 
         std::shared_ptr< cnr_hardware_interface::Resource > claimed_resource;
@@ -144,12 +148,14 @@ bool TopicsRobotHW::doInit()
           ROS_DEBUG_STREAM(ns << " Joint Names:");
           if (!m_robothw_nh.getParam(it->second + "/joint_names", joint_names))
           {
+            CNR_ERROR(m_logger,ns + "/joint_names does not exist");
             CNR_FATAL_RETURN(ns + "/joint_names does not exist");
           }
 
           jr->m_joint_names = joint_names;
           if (joint_names.size() == 0)
           {
+            CNR_ERROR(m_logger,ns + "/joint_names has size zero");
             CNR_FATAL_RETURN(ns + "/joint_names has size zero");
           }
           for (auto const & jn :  jr->m_joint_names)
@@ -195,6 +201,7 @@ bool TopicsRobotHW::doInit()
           std::string frame_id;
           if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))
           {
+            CNR_ERROR(m_logger,ns + "/frame_id does not exist");
             CNR_FATAL_RETURN(ns + "/frame_id does not exist");
           }
           pr->m_frame_id    = frame_id;
@@ -292,6 +299,7 @@ bool TopicsRobotHW::doInit()
     }
     if (m_resources.size() == 0)
     {
+      CNR_ERROR(m_logger,  "No claimed resources. ?!?!?");
       CNR_FATAL_RETURN("No claimed resources. ?!?!?");
     }
 

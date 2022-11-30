@@ -153,12 +153,13 @@ inline bool JointCommandController<H,T>::enterStarting()
 
   m_target.setZero(this->chainNonConst());
   m_target.q() = this->getPosition();
+  // m_last_target.copy(m_target, m_target.FULL_STATE);
 
   this->m_handler.update(m_target, this->chain());
 
-  CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q().transpose() );
-  CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd().transpose() );
-  CNR_DEBUG(this->m_logger, "Target at Start: Effort  : " << m_target.effort().transpose() );
+  CNR_INFO(this->m_logger, "Target at Start: Position: " << m_target.q().transpose() );
+  CNR_INFO(this->m_logger, "Target at Start: Velocity: " << m_target.qd().transpose() );
+  CNR_INFO(this->m_logger, "Target at Start: Effort  : " << m_target.effort().transpose() );
 
   // in the exitStarting, the updateThread with the ffwd is launched
 
@@ -206,6 +207,7 @@ inline bool JointCommandController<H,T>::exitUpdate()
         report << "SAFETY CHECK - Received a position with nan values... superimposed to zero!\n";
         m_target.q() = m_last_target.q();
       }
+      // CNR_INFO(this->m_logger,"dif:"<<(m_target.q() - m_last_target.q()).transpose());
       nominal_qd =(m_target.q() - m_last_target.q()) / this->m_dt.toSec();
     }
     else if(m_priority == QD_PRIORITY)
@@ -253,9 +255,10 @@ inline bool JointCommandController<H,T>::exitUpdate()
   report<< "q  trg: " << TP(m_target.q()) << "\n";
   report<< "qd trg: " << TP(m_target.qd()) << "\n";
   report<< "ef trg: " << TP(m_target.effort()) << "\n";
-
+  // CNR_WARN(this->m_logger,report.str());
   this->m_handler.update(m_target, this->chain());
 
+  // CNR_WARN(this->m_logger,"m_tgt:"<<TP(m_target.q()));
   //for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
   //{
   //  report<< this->m_hw->getHandle(this->chain().getActiveJointName(iAx)) <<"\n";
@@ -418,6 +421,7 @@ inline void JointCommandController<H,T>::setCommandPosition(const rosdyn::Vector
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.q() = in;
+  // CNR_INFO(this->m_logger,"q:"<<in.transpose());
 }
 
 template<class H,class T>
